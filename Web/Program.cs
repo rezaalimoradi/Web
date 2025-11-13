@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Web;
+using Refit;
 using Web;
 using Web.Data;
 
@@ -20,11 +21,16 @@ builder.Services.AddScoped<ProtectedSessionStorage>();
 // AuthHeaderHandler برای افزودن Authorization header به request های محافظت‌شده
 builder.Services.AddTransient<AuthHeaderHandler>();
 
-// ApiAuthService
-builder.Services.AddScoped<ApiAuthService>();
 
 // HttpContextAccessor در صورت نیاز به session/identity
 builder.Services.AddHttpContextAccessor();
+
+
+var apiBaseUrl = builder.Configuration["Api:BaseUrl"];
+
+builder.Services.AddRefitClient<IHasibApi>()
+    .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl))
+    .AddHttpMessageHandler<AuthHeaderHandler>();
 
 // ===== HttpClient ها =====
 

@@ -1,55 +1,41 @@
 ﻿@page "/login"
-@inject ApiAuthService AuthService
+@using global::Shared.Dtos.Account
+@inject IHasibApi Api
+@inject TokenProvider TokenProvider
 @inject NavigationManager Nav
 
 <h3>Login</h3>
 
 <input @bind="username" placeholder="Username" />
 <input @bind="password" type="password" placeholder="Password" />
-<button @onclick="() => LoginAsync()" disabled="@(ready == false)">Login</button>
+<button @onclick="LoginAsync">Login</button>
 
 <p>@message</p>
 
 @code {
-    string username = "admin";
-    string password = "123";
-    string message = "";
-    bool ready = false;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // بررسی اینکه کاربر قبلاً توکن دارد
-            var isAuth = await AuthService.IsAuthenticatedAsync();
-            if (isAuth)
-            {
-                Nav.NavigateTo("/"); // اگر قبلاً login شده → صفحه اصلی
-                return;
-            }
-
-            ready = true;
-            StateHasChanged(); // rerender بعد از آماده شدن
-        }
-    }
+    private string username = "admin";
+    private string password = "123";
+    private string message = "";
 
     private async Task LoginAsync()
     {
-        if (!ready)
+        var result = await Api.LoginAsync(new LoginRequest
         {
-            message = "در حال آماده‌سازی، لطفاً کمی صبر کنید...";
-            return;
-        }
+            Username = username,
+            Password = password
+        });
 
-        var ok = await AuthService.LoginAsync(username, password);
-        if (ok)
+        if (result.IsSuccessStatusCode && result.Content != null)
         {
-            message = "Login successful!";
-            Nav.NavigateTo("/"); // بعد از login → صفحه اصلی
+            var token = result.Content.Token;
+            await TokenProvider.SetTokenAsync(token);
+
+            message = "✅ Login successful!";
+            Nav.NavigateTo("/");
         }
         else
         {
-            message = "نام کاربری یا رمز اشتباه است.";
+            message = "❌ Login failed!";
         }
     }
 }

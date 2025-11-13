@@ -36,39 +36,52 @@ else
         StateHasChanged();
 
         // حالا داده‌های محافظت‌شده فقط بعد از firstRender واقعی و JS آماده
-        await TryLoadProtectedData();
+        //await TryLoadProtectedData();
     }
 
-    private async Task TryLoadProtectedData()
-    {
-        try
-        {
-            if (!TokenProvider.HasToken) return;
+    // private async Task TryLoadProtectedData()
+    // {
+    //     try
+    //     {
+    //         if (!TokenProvider.HasToken) return;
 
-            var response = await Http.GetAsync("api/protected/secret");
+    //         // ۱. API اول
+    //         var response1 = await Http.GetAsync("api/protected/secret");
+    //         if (response1.IsSuccessStatusCode)
+    //         {
+    //             var content1 = await response1.Content.ReadFromJsonAsync<object>();
+    //             message = $"Protected Data 1: {content1}";
+    //         }
+    //         else
+    //         {
+    //             message = $"درخواست API اول شکست خورد: {response1.StatusCode}";
+    //         }
 
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadFromJsonAsync<object>();
-                message = $"Protected Data: {content}";
-            }
-            else
-            {
-                message = $"درخواست محافظت‌شده شکست خورد: {response.StatusCode}";
-            }
-        }
-        catch (Microsoft.JSInterop.JSException)
-        {
-            // JS هنوز آماده نیست → retry بعد از چند ثانیه
-            message = "در حال آماده‌سازی، لطفاً کمی صبر کنید...";
-            await Task.Delay(500);
-            await TryLoadProtectedData();
-        }
-        catch (Exception ex)
-        {
-            message = $"خطا هنگام دریافت داده‌ها: {ex.Message}";
-        }
-    }
+    //         // ۲. API دوم (مثلاً یک endpoint دیگر)
+    //         var response2 = await Http.GetAsync("api/protected/another"); // endpoint جدید
+    //         if (response2.IsSuccessStatusCode)
+    //         {
+    //             var content2 = await response2.Content.ReadFromJsonAsync<object>();
+    //             message += $"\nProtected Data 2: {content2}";
+    //         }
+    //         else
+    //         {
+    //             message += $"\nدرخواست API دوم شکست خورد: {response2.StatusCode}";
+    //         }
+    //     }
+    //     catch (Microsoft.JSInterop.JSException)
+    //     {
+    //         // JS هنوز آماده نیست → retry بعد از چند ثانیه
+    //         message = "در حال آماده‌سازی، لطفاً کمی صبر کنید...";
+    //         await Task.Delay(500);
+    //         await TryLoadProtectedData();
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         message = $"خطا هنگام دریافت داده‌ها: {ex.Message}";
+    //     }
+    // }
+
 
     private async Task LogoutAsync()
     {

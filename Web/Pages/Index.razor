@@ -1,0 +1,78 @@
+﻿@page "/"
+@inject TokenProvider TokenProvider
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<h3>صفحه اصلی (Protected)</h3>
+
+@if (!ready)
+{
+    <p>در حال بارگذاری...</p>
+}
+else
+{
+    <p>@message</p>
+    <button @onclick="LogoutAsync">خروج</button>
+}
+
+@code {
+    private string message = "";
+    private bool ready = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        // Initialize توکن safe
+        await TokenProvider.InitializeAsync();
+
+        if (!TokenProvider.HasToken)
+        {
+            Nav.NavigateTo("/login", true);
+            return;
+        }
+
+        ready = true;
+        StateHasChanged();
+
+        // حالا داده‌های محافظت‌شده فقط بعد از firstRender واقعی و JS آماده
+        await TryLoadProtectedData();
+    }
+
+    private async Task TryLoadProtectedData()
+    {
+        try
+        {
+            if (!TokenProvider.HasToken) return;
+
+            var response = await Http.GetAsync("api/protected/secret");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadFromJsonAsync<object>();
+                message = $"Protected Data: {content}";
+            }
+            else
+            {
+                message = $"درخواست محافظت‌شده شکست خورد: {response.StatusCode}";
+            }
+        }
+        catch (Microsoft.JSInterop.JSException)
+        {
+            // JS هنوز آماده نیست → retry بعد از چند ثانیه
+            message = "در حال آماده‌سازی، لطفاً کمی صبر کنید...";
+            await Task.Delay(500);
+            await TryLoadProtectedData();
+        }
+        catch (Exception ex)
+        {
+            message = $"خطا هنگام دریافت داده‌ها: {ex.Message}";
+        }
+    }
+
+    private async Task LogoutAsync()
+    {
+        await TokenProvider.ClearAsync();
+        Nav.NavigateTo("/login", true);
+    }
+}

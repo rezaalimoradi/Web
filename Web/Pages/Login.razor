@@ -1,0 +1,55 @@
+﻿@page "/login"
+@inject ApiAuthService AuthService
+@inject NavigationManager Nav
+
+<h3>Login</h3>
+
+<input @bind="username" placeholder="Username" />
+<input @bind="password" type="password" placeholder="Password" />
+<button @onclick="() => LoginAsync()" disabled="@(ready == false)">Login</button>
+
+<p>@message</p>
+
+@code {
+    string username = "admin";
+    string password = "123";
+    string message = "";
+    bool ready = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // بررسی اینکه کاربر قبلاً توکن دارد
+            var isAuth = await AuthService.IsAuthenticatedAsync();
+            if (isAuth)
+            {
+                Nav.NavigateTo("/"); // اگر قبلاً login شده → صفحه اصلی
+                return;
+            }
+
+            ready = true;
+            StateHasChanged(); // rerender بعد از آماده شدن
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        if (!ready)
+        {
+            message = "در حال آماده‌سازی، لطفاً کمی صبر کنید...";
+            return;
+        }
+
+        var ok = await AuthService.LoginAsync(username, password);
+        if (ok)
+        {
+            message = "Login successful!";
+            Nav.NavigateTo("/"); // بعد از login → صفحه اصلی
+        }
+        else
+        {
+            message = "نام کاربری یا رمز اشتباه است.";
+        }
+    }
+}

@@ -1,4 +1,4 @@
-﻿namespace Shared.Dtos.Account
+﻿namespace Shared.Dtos.User
 {
     public class LoginResponse
     {

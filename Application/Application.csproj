@@ -21,10 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain\Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Users\QueryHandlers\" />
+    <ProjectReference Include="..\Sheared\Sheared.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Shared.Dtos.Account
+namespace Shared.Dtos.User
 {
     public class SetCookieRequestDto
     {

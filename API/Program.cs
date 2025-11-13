@@ -1,9 +1,14 @@
-﻿using System.Text;
-using API.Services;
+﻿using API.Services;
 using Application.Configuration;
+using Domain.User.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Persistence.Data;
+using System;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +38,25 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddControllers();
+
+// Connection String از appsettings
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+// EF Core
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connectionString));
+
+// Identity
+builder.Services.AddIdentity<AppUser, AppRole>(options =>
+{
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+
 builder.Services.AddEndpointsApiExplorer();
 
 // Swagger Configuration + JWT Support

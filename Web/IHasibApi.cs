@@ -1,5 +1,5 @@
 ﻿using Refit;
-using Shared.Dtos.Account;
+using Shared.Dtos.User;
 using Web.Common;
 
 

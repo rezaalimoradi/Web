@@ -1,15 +1,14 @@
 ﻿using API.Services;
+using Application;
 using Application.Configuration;
 using Domain.User.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Persistence;
 using Persistence.Configuration;
-using Persistence.Data;
 using StackExchange.Redis;
-using System;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,7 +23,7 @@ var jwtSettings = jwtSection.Get<JwtSettings>()
     ?? throw new InvalidOperationException("Jwt configuration section is missing.");
 
 if (string.IsNullOrWhiteSpace(jwtSettings.Key))
-    throw new InvalidOperationException("Jwt:Key is missing or empty in configuration. It must be a string with >= 32 chars.");
+    throw new InvalidOperationException("Jwt:Key is missing or empty. It must be a string with >= 32 chars.");
 
 if (jwtSettings.Key.Length < 32)
     throw new InvalidOperationException("Jwt:Key length must be at least 32 characters for strong encryption.");
@@ -35,40 +34,39 @@ if (string.IsNullOrWhiteSpace(jwtSettings.Issuer) || string.IsNullOrWhiteSpace(j
 var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
 
 // ---------------------------------------------------------
-// 2️⃣ Register Application Services
+// 2️⃣ Register Application & Persistence Layers
 // ---------------------------------------------------------
-builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.ConfigureApplicationServices();
+builder.Services.AddPersistenceServices(builder.Configuration);
 
-
-builder.Services.AddControllers();
-
-// Connection String از appsettings
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-// EF Core
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
-
+// ---------------------------------------------------------
+// 3️⃣ Infrastructure Services (Redis, Token, etc.)
+// ---------------------------------------------------------
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var redisConnection = builder.Configuration.GetConnectionString("Redis");
     return ConnectionMultiplexer.Connect(redisConnection);
 });
+
 builder.Services.AddScoped<RedisCacheService>();
-// Identity
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+// ---------------------------------------------------------
+// 4️⃣ Identity Configuration
+// ---------------------------------------------------------
 builder.Services.AddIdentity<AppUser, AppRole>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
     options.User.RequireUniqueEmail = true;
 })
-.AddEntityFrameworkStores<AppDbContext>()
+.AddEntityFrameworkStores<Persistence.Data.AppDbContext>()
 .AddDefaultTokenProviders();
 
-
+// ---------------------------------------------------------
+// 5️⃣ Swagger Configuration + JWT Support
+// ---------------------------------------------------------
 builder.Services.AddEndpointsApiExplorer();
-
-// Swagger Configuration + JWT Support
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -101,7 +99,7 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // ---------------------------------------------------------
-// 3️⃣ Configure JWT Authentication
+// 6️⃣ JWT Authentication Setup
 // ---------------------------------------------------------
 builder.Services
     .AddAuthentication(options =>
@@ -132,7 +130,7 @@ builder.Services
 builder.Services.AddAuthorization();
 
 // ---------------------------------------------------------
-// 4️⃣ Configure CORS for Blazor Client
+// 7️⃣ CORS for Blazor Client
 // ---------------------------------------------------------
 builder.Services.AddCors(options =>
 {
@@ -146,12 +144,12 @@ builder.Services.AddCors(options =>
 });
 
 // ---------------------------------------------------------
-// 5️⃣ Build Application
+// 8️⃣ Build Application
 // ---------------------------------------------------------
 var app = builder.Build();
 
 // ---------------------------------------------------------
-// 6️⃣ Middleware Pipeline
+// 9️⃣ Middleware Pipeline
 // ---------------------------------------------------------
 if (app.Environment.IsDevelopment())
 {
@@ -164,7 +162,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// CORS قبل از احراز هویت باید بیاد
+// CORS باید قبل از Auth باشد
 app.UseCors("AllowBlazorClient");
 
 app.UseAuthentication();

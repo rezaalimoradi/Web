@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Persistence.Configuration;
 using Persistence.Data;
+using StackExchange.Redis;
 using System;
 using System.Text;
 
@@ -37,6 +39,7 @@ var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key
 // ---------------------------------------------------------
 builder.Services.AddScoped<ITokenService, TokenService>();
 
+
 builder.Services.AddControllers();
 
 // Connection String از appsettings
@@ -46,6 +49,12 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var redisConnection = builder.Configuration.GetConnectionString("Redis");
+    return ConnectionMultiplexer.Connect(redisConnection);
+});
+builder.Services.AddScoped<RedisCacheService>();
 // Identity
 builder.Services.AddIdentity<AppUser, AppRole>(options =>
 {

@@ -80,7 +80,12 @@ else
     {
         if (!firstRender) return;
 
+        // جلوگیری از JS قبل از آماده شدن کامل
+        await Task.Yield();
+
+        // اکنون JS آماده است → توکن را بخوان
         await TokenProvider.InitializeAsync();
+
         if (!TokenProvider.HasToken)
         {
             Nav.NavigateTo("/login", true);
@@ -89,8 +94,10 @@ else
 
         ready = true;
         await LoadUsersAsync();
+
         StateHasChanged();
     }
+
 
     private async Task LoadUsersAsync()
     {

@@ -6,24 +6,33 @@
 @inject NotificationService Notify
 
 <EditForm Model="@model" OnValidSubmit="Save">
-    <RadzenTemplateForm TItem="UserDto">
-        <div class="p-3">
+    <DataAnnotationsValidator />
 
-            <RadzenTextBox @bind-Value="model.FirstName" Name="UserName"
-                           Placeholder="نام کاربری" Style="width:100%" />
-            <RadzenRequiredValidator Component="UserName" Text="ضروری" />
+    <div class="p-3">
 
-            <RadzenTextBox @bind-Value="model.Email" Name="Email"
-                           Placeholder="ایمیل" Style="width:100%" class="mt-3" />
-            <RadzenRequiredValidator Component="Email" Text="ضروری" />
+        <RadzenTextBox @bind-Value="model.UserName"
+                       Name="UserName"
+                       Placeholder="نام کاربری"
+                       Style="width:100%" />
+        <RadzenRequiredValidator Component="UserName" Text="ضروری" Popup="false" />
 
-            <div class="mt-3">
-                <RadzenButton Text="ثبت" ButtonStyle="ButtonStyle.Primary" Type="Submit" />
-                <RadzenButton Text="انصراف" Click="Close" Class="ml-2" />
-            </div>
+        <RadzenTextBox @bind-Value="model.Email"
+                       Name="Email"
+                       Placeholder="ایمیل"
+                       Style="width:100%" class="mt-3" />
+        <RadzenRequiredValidator Component="Email" Text="ضروری" Popup="false" />
 
+        <div class="mt-3">
+            <RadzenButton Text="ثبت"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Type="Submit" />
+
+            <RadzenButton Text="انصراف"
+                          Click="Close"
+                          Class="ml-2" />
         </div>
-    </RadzenTemplateForm>
+
+    </div>
 </EditForm>
 
 @code {
@@ -31,7 +40,6 @@
 
     private async Task Save()
     {
-        // فعلاً API تعریف نشده → فقط خروجی می‌دهیم
         Dialog.Close(model);
     }
 

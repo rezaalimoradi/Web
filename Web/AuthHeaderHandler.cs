@@ -1,5 +1,4 @@
 ﻿using System.Net.Http.Headers;
-using Web;
 
 public class AuthHeaderHandler : DelegatingHandler
 {
@@ -12,14 +11,15 @@ public class AuthHeaderHandler : DelegatingHandler
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        // مسیر login را استثناء کن
+        // اجازه بده login بدون header اجرا شود
         if (!request.RequestUri!.AbsolutePath.Contains("/api/auth/login"))
         {
-            await _tokenProvider.InitializeAsync();
+            // **Do NOT await InitializeAsync here** (it may call JS during prerender)
+            var token = _tokenProvider.Token; // فقط از حافظه بخوان
 
-            if (_tokenProvider.HasToken)
+            if (!string.IsNullOrWhiteSpace(token))
             {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _tokenProvider.Token);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
         }
 

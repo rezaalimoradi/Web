@@ -4,38 +4,76 @@
 @inject TokenProvider TokenProvider
 @inject NavigationManager Nav
 
-<h3>Login</h3>
+<h3 class="mb-3">Login</h3>
 
-<input @bind="username" placeholder="Username" />
-<input @bind="password" type="password" placeholder="Password" />
-<button @onclick="LoginAsync">Login</button>
+<div class="login-container">
+    <div class="mb-2">
+        <input class="form-control"
+               @bind="username"
+               placeholder="Username" />
+    </div>
 
-<p>@message</p>
+    <div class="mb-2">
+        <input class="form-control"
+               @bind="password"
+               type="password"
+               placeholder="Password" />
+    </div>
+
+    <button class="btn btn-primary w-100"
+            @onclick="LoginAsync"
+            disabled="@isLoading">
+        @(isLoading ? "Please wait..." : "Login")
+    </button>
+
+    @if (!string.IsNullOrWhiteSpace(message))
+    {
+        <p class="mt-3">@message</p>
+    }
+</div>
 
 @code {
-    private string username = "admin";
-    private string password = "123";
+    private string username = "";
+    private string password = "";
     private string message = "";
+    private bool isLoading = false;
 
     private async Task LoginAsync()
     {
-        var result = await Api.LoginAsync(new LoginRequest
-        {
-            Username = username,
-            Password = password
-        });
+        message = "";
+        isLoading = true;
 
-        if (result.IsSuccessStatusCode && result.Content != null)
+        try
         {
+            var result = await Api.LoginAsync(new LoginRequest
+            {
+                Username = username,
+                Password = password
+            });
+
+            if (!result.IsSuccessStatusCode || result.Content == null)
+            {
+                message = "❌ Login failed. Please check your credentials.";
+                return;
+            }
+
             var token = result.Content.Token;
+
+            // ذخیره ایمن توکن (فقط در حالت interactive → OK)
             await TokenProvider.SetTokenAsync(token);
 
             message = "✅ Login successful!";
-            Nav.NavigateTo("/");
+            await Task.Delay(300);
+
+            Nav.NavigateTo("/", true);
         }
-        else
+        catch (Exception ex)
         {
-            message = "❌ Login failed!";
+            message = $"❌ Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 }

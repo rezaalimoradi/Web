@@ -1,6 +1,7 @@
+using CMS.Domain.Common;
 using System.Linq.Expressions;
 
-namespace CMS.Domain.Common
+namespace Domain.Common
 {
     /// <summary>
     /// IRepository interface defines the contract for repository operations for a specific entity type (TEntity).

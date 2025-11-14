@@ -1,4 +1,4 @@
-namespace CMS.Domain.Common
+namespace Domain.Common
 {
     /// <summary>
     /// Paged list interface

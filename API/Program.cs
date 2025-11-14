@@ -66,6 +66,7 @@ builder.Services.AddIdentity<AppUser, AppRole>(options =>
 // ---------------------------------------------------------
 // 5️⃣ Swagger Configuration + JWT Support
 // ---------------------------------------------------------
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

@@ -1,4 +1,4 @@
-namespace CMS.Domain.Common
+namespace Domain.Common
 {
     /// <summary>
     /// The PagedList class is used to manage paginated data, inheriting from List<T> 

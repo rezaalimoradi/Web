@@ -1,4 +1,6 @@
-namespace CMS.Domain.Common
+using CMS.Domain.Common;
+
+namespace Domain.Common
 {
     /// <summary>
     /// Defines the contract for a unit of work pattern.

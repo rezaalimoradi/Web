@@ -1,7 +1,7 @@
 ﻿using Application.Common;
 using Application.Features.Request.Queries.User;
 using AutoMapper;
-using CMS.Domain.Common;
+using Domain.Common;
 using Domain.User.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;

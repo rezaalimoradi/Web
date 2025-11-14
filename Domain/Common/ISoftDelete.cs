@@ -1,4 +1,4 @@
-namespace CMS.Domain.Common
+namespace Domain.Common
 {
     /// <summary>
     /// Interface for soft delete functionality. Entities that implement this interface 

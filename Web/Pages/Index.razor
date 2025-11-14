@@ -1,9 +1,14 @@
 ﻿@page "/"
+@using Radzen
+@using Radzen.Blazor
+@using global::Shared.Dtos.User
 @inject TokenProvider TokenProvider
-@inject HttpClient Http
 @inject NavigationManager Nav
+@inject IHasibApi Api
+@inject DialogService DialogService
+@inject NotificationService Notify
 
-<h3>صفحه اصلی (Protected)</h3>
+<h3>مدیریت کاربران</h3>
 
 @if (!ready)
 {
@@ -11,21 +16,71 @@
 }
 else
 {
-    <p>@message</p>
-    <button @onclick="LogoutAsync">خروج</button>
+    <div class="mb-3">
+        <RadzenButton Text="افزودن کاربر جدید" Icon="add" ButtonStyle="ButtonStyle.Primary"
+                      Click="CreateUser" />
+        <RadzenButton Text="PDF" Icon="picture_as_pdf" Click="ExportPdf"
+                      Class="ml-2" />
+        <RadzenButton Text="Excel" Icon="table_view" Click="ExportExcel"
+                      Class="ml-2" />
+        <RadzenButton Text="خروج" Icon="logout" ButtonStyle="ButtonStyle.Danger"
+                      Click="LogoutAsync" Class="float-right" />
+    </div>
+
+    <RadzenTextBox @bind-Value="searchText" Placeholder="جستجو..." Style="width:250px" />
+    <RadzenButton Text="جستجو" Icon="search" Click="ApplyFilter"
+                  Class="ml-2" />
+
+    <RadzenDataGrid @ref="grid"
+                    Data="@filteredUsers"
+                    TItem="UserDto"
+                    ColumnWidth="200px"
+                    AllowFiltering="false"
+                    AllowPaging="true"
+                    AllowSorting="true"
+                    PageSize="10"
+                    Class="mt-4"
+                    RowSelect="ShowDetails">
+
+        <Columns>
+            <RadzenDataGridColumn TItem="UserDto" Property="UserName" Title="نام کاربری" />
+            <RadzenDataGridColumn TItem="UserDto" Property="Email" Title="ایمیل" />
+
+            <RadzenDataGridColumn TItem="UserDto"
+                                  Title="عملیات"
+                                  Filterable="false"
+                                  Sortable="false"
+                                  Width="180px">
+                <Template Context="u">
+                    <RadzenButton Icon="visibility" Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Info"
+                                  Click="() => ShowDetails(u)" />
+                    <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Warning"
+                                  Click="() => EditUser(u)"
+                                  Class="ml-1" />
+                    <RadzenButton Icon="delete" Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Danger"
+                                  Click="() => DeleteUser(u)"
+                                  Class="ml-1" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
 }
 
 @code {
-    private string message = "";
     private bool ready = false;
+    private string? searchText;
+    private List<UserDto>? users;
+    private List<UserDto>? filteredUsers;
+    private RadzenDataGrid<UserDto>? grid;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
-        // Initialize توکن safe
         await TokenProvider.InitializeAsync();
-
         if (!TokenProvider.HasToken)
         {
             Nav.NavigateTo("/login", true);
@@ -33,55 +88,114 @@ else
         }
 
         ready = true;
+        await LoadUsersAsync();
         StateHasChanged();
-
-        // حالا داده‌های محافظت‌شده فقط بعد از firstRender واقعی و JS آماده
-        //await TryLoadProtectedData();
     }
 
-    // private async Task TryLoadProtectedData()
-    // {
-    //     try
-    //     {
-    //         if (!TokenProvider.HasToken) return;
+    private async Task LoadUsersAsync()
+    {
+        try
+        {
+            var response = await Api.GetUsersAsync();
+            if (!response.IsSuccessStatusCode || response.Content == null)
+            {
+                Notify.Notify(NotificationSeverity.Error, "خطا", "دریافت کاربران انجام نشد");
+                return;
+            }
 
-    //         // ۱. API اول
-    //         var response1 = await Http.GetAsync("api/protected/secret");
-    //         if (response1.IsSuccessStatusCode)
-    //         {
-    //             var content1 = await response1.Content.ReadFromJsonAsync<object>();
-    //             message = $"Protected Data 1: {content1}";
-    //         }
-    //         else
-    //         {
-    //             message = $"درخواست API اول شکست خورد: {response1.StatusCode}";
-    //         }
+            users = response.Content.Result ?? new();
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Notify.Notify(NotificationSeverity.Error, "خطا", ex.Message);
+        }
+    }
 
-    //         // ۲. API دوم (مثلاً یک endpoint دیگر)
-    //         var response2 = await Http.GetAsync("api/protected/another"); // endpoint جدید
-    //         if (response2.IsSuccessStatusCode)
-    //         {
-    //             var content2 = await response2.Content.ReadFromJsonAsync<object>();
-    //             message += $"\nProtected Data 2: {content2}";
-    //         }
-    //         else
-    //         {
-    //             message += $"\nدرخواست API دوم شکست خورد: {response2.StatusCode}";
-    //         }
-    //     }
-    //     catch (Microsoft.JSInterop.JSException)
-    //     {
-    //         // JS هنوز آماده نیست → retry بعد از چند ثانیه
-    //         message = "در حال آماده‌سازی، لطفاً کمی صبر کنید...";
-    //         await Task.Delay(500);
-    //         await TryLoadProtectedData();
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         message = $"خطا هنگام دریافت داده‌ها: {ex.Message}";
-    //     }
-    // }
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrWhiteSpace(searchText))
+            filteredUsers = users;
+        else
+        {
+            var s = searchText.Trim();
+            filteredUsers = users!
+                .Where(u =>
+                    (u.UserName != null && u.UserName.Contains(s, StringComparison.OrdinalIgnoreCase)) ||
+                    (u.Email != null && u.Email.Contains(s, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+        }
 
+        InvokeAsync(StateHasChanged);
+    }
+
+    // ------------------------------------
+    // CRUD Dialogs
+    // ------------------------------------
+
+    private async Task CreateUser()
+    {
+        var result = await DialogService.OpenAsync<CreateUserDialog>(
+            "افزودن کاربر جدید",
+            null,
+            new DialogOptions { Width = "600px", Height = "450px" });
+
+        if (result != null)
+        {
+            Notify.Notify(NotificationSeverity.Success, "ثبت شد", "کاربر با موفقیت ایجاد شد.");
+            await LoadUsersAsync();
+        }
+    }
+
+    private async Task EditUser(UserDto user)
+    {
+        var result = await DialogService.OpenAsync<EditUserDialog>(
+            "ویرایش کاربر",
+            new() { ["User"] = user },
+            new DialogOptions { Width = "600px", Height = "450px" });
+
+        if (result != null)
+        {
+            Notify.Notify(NotificationSeverity.Success, "ویرایش شد", "کاربر با موفقیت ویرایش شد.");
+            await LoadUsersAsync();
+        }
+    }
+
+    private async Task ShowDetails(UserDto user)
+    {
+        await DialogService.OpenAsync<ShowUserDialog>(
+            "مشخصات کاربر",
+            new() { ["User"] = user },
+            new DialogOptions { Width = "600px", Height = "430px" });
+    }
+
+    private async Task DeleteUser(UserDto user)
+    {
+        bool ok = await DialogService.Confirm("آیا از حذف مطمئن هستید؟") ?? false;
+
+        if (!ok) return;
+
+        // فعلاً API حذف نیست → فقط ساختار
+        Notify.Notify(NotificationSeverity.Warning, "API ندارد", "بعداً باید API حذف ساخته شود.");
+    }
+
+    // ------------------------------------
+    // Export PDF & Excel
+    // ------------------------------------
+
+    private async Task ExportPdf()
+    {
+        await DialogService.OpenAsync<ExportPdfDialog>("دریافت PDF",
+            new() { ["Users"] = users },
+            new DialogOptions { Width = "900px", Height = "650px" });
+    }
+
+    private async Task ExportExcel()
+    {
+        await DialogService.OpenAsync<ExportExcelDialog>("دریافت Excel",
+            new() { ["Users"] = users },
+            new DialogOptions { Width = "900px", Height = "650px" });
+    }
 
     private async Task LogoutAsync()
     {

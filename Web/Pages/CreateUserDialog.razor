@@ -1,0 +1,39 @@
+﻿@inherits ComponentBase
+@using Radzen
+@using Radzen.Blazor
+@using global::Shared.Dtos.User
+@inject DialogService Dialog
+@inject NotificationService Notify
+
+<EditForm Model="@model" OnValidSubmit="Save">
+    <RadzenTemplateForm TItem="UserDto">
+        <div class="p-3">
+
+            <RadzenTextBox @bind-Value="model.FirstName" Name="UserName"
+                           Placeholder="نام کاربری" Style="width:100%" />
+            <RadzenRequiredValidator Component="UserName" Text="ضروری" />
+
+            <RadzenTextBox @bind-Value="model.Email" Name="Email"
+                           Placeholder="ایمیل" Style="width:100%" class="mt-3" />
+            <RadzenRequiredValidator Component="Email" Text="ضروری" />
+
+            <div class="mt-3">
+                <RadzenButton Text="ثبت" ButtonStyle="ButtonStyle.Primary" Type="Submit" />
+                <RadzenButton Text="انصراف" Click="Close" Class="ml-2" />
+            </div>
+
+        </div>
+    </RadzenTemplateForm>
+</EditForm>
+
+@code {
+    private UserDto model = new();
+
+    private async Task Save()
+    {
+        // فعلاً API تعریف نشده → فقط خروجی می‌دهیم
+        Dialog.Close(model);
+    }
+
+    void Close() => Dialog.Close(null);
+}

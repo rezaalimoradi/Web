@@ -1,0 +1,29 @@
+﻿@using Radzen
+@using Radzen.Blazor
+@using global::Shared.Dtos.User
+@inherits ComponentBase
+@inject DialogService Dialog
+@inject IJSRuntime JS
+@using OfficeOpenXml
+
+<div class="p-3">
+    <h4>دانلود PDF</h4>
+
+    <RadzenButton Text="دانلود PDF" Icon="download" ButtonStyle="ButtonStyle.Primary"
+                  Click="GeneratePdf" />
+
+    <RadzenButton Text="بستن" Click="Close" Class="ml-2" />
+</div>
+
+@code {
+    [Parameter] public List<UserDto> Users { get; set; }
+
+    private async Task GeneratePdf()
+    {
+        // var file = await UserPdfExporter.GenerateAsync(Users);
+        // await using var stream = new MemoryStream(file);
+        // await JS.InvokeVoidAsync("downloadFileFromStream", "users.pdf", stream);
+    }
+
+    void Close() => Dialog.Close();
+}

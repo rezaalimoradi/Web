@@ -1,0 +1,20 @@
+﻿@using Radzen
+@using Radzen.Blazor
+@using global::Shared.Dtos.User
+@inherits ComponentBase
+@inject DialogService Dialog
+
+<div class="p-3">
+    <h4>مشخصات کاربر</h4>
+
+    <p><b>نام کاربری:</b> @User.UserName</p>
+    <p><b>ایمیل:</b> @User.Email</p>
+
+    <RadzenButton Text="بستن" Click="Close" Style="margin-top:15px" />
+</div>
+
+@code {
+    [Parameter] public UserDto User { get; set; }
+
+    void Close() => Dialog.Close();
+}

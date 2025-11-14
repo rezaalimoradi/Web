@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Microsoft.AspNetCore.Components.Web;
+﻿using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using QuestPDF.Infrastructure;
+using Radzen;
 using Refit;
 using Web;
 using Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 // ===== Services =====
 builder.Services.AddRazorPages();
@@ -25,6 +27,7 @@ builder.Services.AddTransient<AuthHeaderHandler>();
 // HttpContextAccessor در صورت نیاز به session/identity
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddRadzenComponents();
 
 var apiBaseUrl = builder.Configuration["Api:BaseUrl"];
 

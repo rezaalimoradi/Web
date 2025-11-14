@@ -1,5 +1,6 @@
 ﻿using Application.Common;
 using Application.Features.Request.Queries.User;
+using AutoMapper;
 using Domain.User.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
@@ -12,10 +13,12 @@ namespace Application.Features.Handler.QueryHandlers.User
         : IRequestHandler<GetUsersQuery, ResultModel<List<UserDto>>>
     {
         private readonly UserManager<AppUser> _userManager;
+        private readonly IMapper _mapper;
 
-        public GetUsersQueryHandler(UserManager<AppUser> userManager)
+        public GetUsersQueryHandler(UserManager<AppUser> userManager, IMapper mapper)
         {
             _userManager = userManager;
+            _mapper = mapper;
         }
 
         public async Task<ResultModel<List<UserDto>>> Handle(
@@ -32,11 +35,13 @@ namespace Application.Features.Handler.QueryHandlers.User
                 if (users == null || !users.Any())
                     return ResultModel<List<UserDto>>.Success(new List<UserDto>());
 
-                return ResultModel<List<UserDto>>.Success(users);
+                // 📌 اینجاست که Mapper استفاده میشه
+                var dto = _mapper.Map<List<UserDto>>(users);
+
+                return ResultModel<List<UserDto>>.Success(dto);
             }
-            catch (Exception ex)
+            catch
             {
-                // لاگ‌گیری در صورت نیاز
                 return ResultModel<List<UserDto>>.Fail("خطا در دریافت لیست کاربران");
             }
         }

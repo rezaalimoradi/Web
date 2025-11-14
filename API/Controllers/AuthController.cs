@@ -1,5 +1,4 @@
 ﻿using API.Services;
-using CMS.Application.Users.Dtos;
 using Domain.Login;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,7 +14,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequestDto model)
+    public IActionResult Login([FromBody] LoginRequest model)
     {
         if (model.Username != "admin" || model.Password != "123")
             return Unauthorized();

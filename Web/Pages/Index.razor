@@ -1,6 +1,5 @@
 ﻿@page "/"
 @using Radzen
-@using Radzen.Blazor
 @using global::Shared.Dtos.User
 @inject TokenProvider TokenProvider
 @inject NavigationManager Nav
@@ -8,82 +7,161 @@
 @inject DialogService DialogService
 @inject NotificationService Notify
 
-<h3>مدیریت کاربران</h3>
+<style>
+    .custom-card {
+        border: 1px solid #ccc;
+        padding: 20px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .action-btn {
+        margin-left: 4px;
+    }
+
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(255, 255, 255, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .action-btn {
+        padding: 3px 6px !important;
+        border-radius: 6px;
+    }
+
+        .action-btn i {
+            font-size: 1.1rem;
+        }
+
+</style>
+
 
 @if (!ready)
 {
-    <p>در حال بارگذاری...</p>
+    <div class="overlay">
+        <div class="spinner-border text-primary" style="width:3rem; height:3rem"></div>
+    </div>
 }
 else
 {
-    <div class="mb-3">
-        <RadzenButton Text="افزودن کاربر جدید" Icon="add" ButtonStyle="ButtonStyle.Primary"
-                      Click="CreateUser" />
-        <RadzenButton Text="PDF" Icon="picture_as_pdf" Click="ExportPdf"
-                      Class="ml-2" />
-        <RadzenButton Text="Excel" Icon="table_view" Click="ExportExcel"
-                      Class="ml-2" />
-        <RadzenButton Text="خروج" Icon="logout" ButtonStyle="ButtonStyle.Danger"
-                      Click="LogoutAsync" Class="float-right" />
+    <div class="custom-card">
+
+        <div class="card">
+            <div class="card-header text-start">
+                <button class="btn btn-success me-2" @onclick="CreateUser">افزودن کاربر جدید</button>
+                <button class="btn btn-warning me-2" @onclick="ExportPdf">PDF</button>
+                <button class="btn btn-primary me-2" @onclick="ExportExcel">Excel</button>
+            </div>
+
+            <div class="card-body">
+                <form>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label">جستجو</label>
+                            <input class="form-control"
+                                   placeholder="جستجو..."
+                                   @bind="searchText" />
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success" @onclick="ApplyFilter">جستجو</button>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <RadzenTextBox @bind-Value="searchText" Placeholder="جستجو..." Style="width:250px" />
-    <RadzenButton Text="جستجو" Icon="search" Click="ApplyFilter"
-                  Class="ml-2" />
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>نام کاربری</th>
+                <th>ایمیل</th>
+                <th style="width:160px;">عملیات</th>
+            </tr>
+        </thead>
 
-    <RadzenDataGrid @ref="grid"
-                    Data="@filteredUsers"
-                    TItem="UserDto"
-                    ColumnWidth="200px"
-                    AllowFiltering="false"
-                    AllowPaging="true"
-                    AllowSorting="true"
-                    PageSize="10"
-                    Class="mt-4"
-                    RowSelect="ShowDetails">
+        <tbody>
+            @if (filteredUsers is null)
+            {
+                <tr><td colspan="3">در حال بارگذاری...</td></tr>
+            }
+            else if (!filteredUsers.Any())
+            {
+                <tr><td colspan="3">داده‌ای یافت نشد.</td></tr>
+            }
+            else
+            {
+                @foreach (var u in filteredUsers)
+                {
+                    <tr>
+                        <td>@u.UserName</td>
+                        <td>@u.Email</td>
+                        <td>
+                            <button class="btn btn-info btn-sm action-btn"
+                                    @onclick="() => ShowDetails(u)"
+                                    data-bs-toggle="tooltip"
+                                    title="مشاهده">
+                                <i class="bi bi-eye"></i>
+                            </button>
 
-        <Columns>
-            <RadzenDataGridColumn TItem="UserDto" Property="UserName" Title="نام کاربری" />
-            <RadzenDataGridColumn TItem="UserDto" Property="Email" Title="ایمیل" />
+                            <button class="btn btn-warning btn-sm action-btn"
+                                    @onclick="() => EditUser(u)"
+                                    data-bs-toggle="tooltip"
+                                    title="ویرایش">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
 
-            <RadzenDataGridColumn TItem="UserDto"
-                                  Title="عملیات"
-                                  Filterable="false"
-                                  Sortable="false"
-                                  Width="180px">
-                <Template Context="u">
-                    <RadzenButton Icon="visibility" Size="ButtonSize.Small"
-                                  ButtonStyle="ButtonStyle.Info"
-                                  Click="() => ShowDetails(u)" />
-                    <RadzenButton Icon="edit" Size="ButtonSize.Small"
-                                  ButtonStyle="ButtonStyle.Warning"
-                                  Click="() => EditUser(u)"
-                                  Class="ml-1" />
-                    <RadzenButton Icon="delete" Size="ButtonSize.Small"
-                                  ButtonStyle="ButtonStyle.Danger"
-                                  Click="() => DeleteUser(u)"
-                                  Class="ml-1" />
-                </Template>
-            </RadzenDataGridColumn>
-        </Columns>
-    </RadzenDataGrid>
+                            <button class="btn btn-danger btn-sm action-btn"
+                                    @onclick="() => DeleteUser(u)"
+                                    data-bs-toggle="tooltip"
+                                    title="حذف">
+                                <i class="bi bi-trash"></i>
+                            </button>
+
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between mt-3">
+        <button class="btn btn-outline-primary" @onclick="PrevPage" disabled="@(pageNumber == 1)">صفحه قبل</button>
+        <span>صفحه @pageNumber</span>
+        <button class="btn btn-outline-primary" @onclick="NextPage">صفحه بعد</button>
+    </div>
 }
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+
 
 @code {
     private bool ready = false;
     private string? searchText;
     private List<UserDto>? users;
     private List<UserDto>? filteredUsers;
-    private RadzenDataGrid<UserDto>? grid;
+
+    private int pageNumber = 1;
+    private int pageSize = 10;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
-        // جلوگیری از JS قبل از آماده شدن کامل
-        await Task.Yield();
-
-        // اکنون JS آماده است → توکن را بخوان
         await TokenProvider.InitializeAsync();
 
         if (!TokenProvider.HasToken)
@@ -94,29 +172,21 @@ else
 
         ready = true;
         await LoadUsersAsync();
-
         StateHasChanged();
     }
 
-
     private async Task LoadUsersAsync()
     {
-        try
-        {
-            var response = await Api.GetUsersAsync();
-            if (!response.IsSuccessStatusCode || response.Content == null)
-            {
-                Notify.Notify(NotificationSeverity.Error, "خطا", "دریافت کاربران انجام نشد");
-                return;
-            }
+        var response = await Api.GetUsersAsync();
 
-            users = response.Content.Result ?? new();
-            ApplyFilter();
-        }
-        catch (Exception ex)
+        if (!response.IsSuccessStatusCode || response.Content == null)
         {
-            Notify.Notify(NotificationSeverity.Error, "خطا", ex.Message);
+            Notify.Notify(NotificationSeverity.Error, "خطا", "دریافت کاربران انجام نشد");
+            return;
         }
+
+        users = response.Content.Result ?? new();
+        ApplyFilter();
     }
 
     private void ApplyFilter()
@@ -128,17 +198,13 @@ else
             var s = searchText.Trim();
             filteredUsers = users!
                 .Where(u =>
-                    (u.UserName != null && u.UserName.Contains(s, StringComparison.OrdinalIgnoreCase)) ||
-                    (u.Email != null && u.Email.Contains(s, StringComparison.OrdinalIgnoreCase)))
+                    (!string.IsNullOrEmpty(u.UserName) && u.UserName.Contains(s, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(u.Email) && u.Email.Contains(s, StringComparison.OrdinalIgnoreCase)))
                 .ToList();
         }
 
-        InvokeAsync(StateHasChanged);
+        StateHasChanged();
     }
-
-    // ------------------------------------
-    // CRUD Dialogs
-    // ------------------------------------
 
     private async Task CreateUser()
     {
@@ -148,47 +214,35 @@ else
             new DialogOptions { Width = "600px", Height = "450px" });
 
         if (result != null)
-        {
-            Notify.Notify(NotificationSeverity.Success, "ثبت شد", "کاربر با موفقیت ایجاد شد.");
             await LoadUsersAsync();
-        }
     }
 
-    private async Task EditUser(UserDto user)
+    private async Task EditUser(UserDto u)
     {
         var result = await DialogService.OpenAsync<EditUserDialog>(
             "ویرایش کاربر",
-            new() { ["User"] = user },
+            new() { ["User"] = u },
             new DialogOptions { Width = "600px", Height = "450px" });
 
         if (result != null)
-        {
-            Notify.Notify(NotificationSeverity.Success, "ویرایش شد", "کاربر با موفقیت ویرایش شد.");
             await LoadUsersAsync();
-        }
     }
 
-    private async Task ShowDetails(UserDto user)
+    private async Task ShowDetails(UserDto u)
     {
         await DialogService.OpenAsync<ShowUserDialog>(
             "مشخصات کاربر",
-            new() { ["User"] = user },
+            new() { ["User"] = u },
             new DialogOptions { Width = "600px", Height = "430px" });
     }
 
-    private async Task DeleteUser(UserDto user)
+    private async Task DeleteUser(UserDto u)
     {
         bool ok = await DialogService.Confirm("آیا از حذف مطمئن هستید؟") ?? false;
-
         if (!ok) return;
 
-        // فعلاً API حذف نیست → فقط ساختار
-        Notify.Notify(NotificationSeverity.Warning, "API ندارد", "بعداً باید API حذف ساخته شود.");
+        Notify.Notify(NotificationSeverity.Warning, "API ندارد", "API حذف هنوز ساخته نشده است.");
     }
-
-    // ------------------------------------
-    // Export PDF & Excel
-    // ------------------------------------
 
     private async Task ExportPdf()
     {
@@ -204,9 +258,17 @@ else
             new DialogOptions { Width = "900px", Height = "650px" });
     }
 
-    private async Task LogoutAsync()
+    private async Task NextPage()
     {
-        await TokenProvider.ClearAsync();
-        Nav.NavigateTo("/login", true);
+        pageNumber++;
+        ApplyFilter();
+    }
+
+    private async Task PrevPage()
+    {
+        if (pageNumber > 1)
+            pageNumber--;
+
+        ApplyFilter();
     }
 }

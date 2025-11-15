@@ -3,7 +3,6 @@ using QuestPDF.Infrastructure;
 using Radzen;
 using Refit;
 using Web;
-using Web.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,8 +12,6 @@ QuestPDF.Settings.License = LicenseType.Community;
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
-// WeatherForecastService نمونه است
-builder.Services.AddSingleton<WeatherForecastService>();
 
 // TokenProvider با ProtectedSessionStorage
 builder.Services.AddScoped<TokenProvider>();
@@ -84,7 +81,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
+app.UseStaticFiles();
 // Blazor Server endpoints
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");

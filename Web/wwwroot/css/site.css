@@ -1,7 +1,25 @@
-@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+
+@font-face {
+    font-family: 'IRANSans';
+    src: url('/fonts/Iransans/ttf/IRANSansWeb(FaNum).ttf') format('truetype');
+    src: url('/fonts/Iransans/ttf/IRANSansWeb(FaNum)_Black.ttf') format('truetype');
+    src: url('/fonts/Iransans/ttf/IRANSansWeb(FaNum)_Bold.ttf') format('truetype');
+    src: url('/fonts/Iransans/ttf/IRANSansWeb(FaNum)_Light.ttf') format('truetype');
+    src: url('/fonts/Iransans/ttf/IRANSansWeb(FaNum)_Medium.ttf') format('truetype');
+    src: url('/fonts/Iransans/ttf/IRANSansWeb(FaNum)_UltraLight.ttf') format('truetype');
+    font-weight: normal;
+}
+@font-face {
+    font-family: 'Yekan';
+    src: url('/fonts/vazir/Vazir-Bold.ttf') format('truetype');
+    src: url('/fonts/vazir/Vazir-Thin.ttf') format('truetype');
+    font-weight: normal;
+}
 
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Yekan', 'IRANSans', sans-serif !important;
+    font-size:14px
 }
 
 h1:focus {
@@ -66,3 +84,18 @@ a, .btn-link {
     .blazor-error-boundary::after {
         content: "An error has occurred."
     }
+/* wwwroot/css/site.css */
+html, body {
+    font-family: 'Tahoma', 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.rz-data-grid {
+    direction: rtl;
+}
+
+/* اگر از Material 3 استفاده می‌کنید، این خط مهم است */
+.rz-button {
+    font-family: inherit !important;
+}
